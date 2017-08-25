@@ -1,8 +1,4 @@
 % In this program we assume only one action will be taken at a time.
-pm(1..5).
-ps(1..3).
-
-
 block(a).
 block(b).
 block(c).
@@ -19,6 +15,8 @@ time(1..10).
 on(g,h,1).on(h,a,1).on(a,t,1).
 on(d,e,1).on(e,b,1).on(b,t,1).
 on(i,f,1).on(f,c,1).on(c,t,1).
+
+
 
 % Define what means a block is clear at time T.
 % The idea is to generate clear/2 based on fluent on/3 at each time.
@@ -54,54 +52,61 @@ higher_rule_s(T,Priority):- time(T),
 goal(T):- on(a,b,T),on(b,c,T),on(c,t,T),clear(a,T).
 
 % Actions for top level TR procedure
-
-ruleapp(T,P,m):- on(b,c,T),on(c,t,T),clear(a,T),clear(b,T),pm(P,mb).
-ruleapp(T,P,m):- on(b,c,T),on(c,t,T),pm(P,md).
-ruleapp(T,P,m):- on(c,t,T),clear(b,T),clear(c,T),pm(P,me).
-ruleapp(T,P,m):- on(c,t,T),clear(b,T),pm(P,mf).
-ruleapp(T,P,m):- on(c,t,T),pm(P,mg).
-
-
-move_on(a,b,T):- ruleapp(T,P,m),not higher_rule_m(T,P).
-
-make_clear(a,T):- ruleapp(T,P,m),not higher_rule_m(T,P).
-move_on(b,c,T):- ruleapp(T,P,m),not higher_rule_m(T,P).
-make_clear(c,T):- ruleapp(T,P,m),not higher_rule_m(T,P).
-make_clear(b,T):- ruleapp(T,P,m),not higher_rule_m(T,P).
+ruleapp(T,1,m):- goal(T).
+ruleapp(T,2,m):- on(b,c,T),on(c,t,T),clear(a,T),clear(b,T).
+ruleapp(T,3,m):- on(b,c,T),on(c,t,T),clear(a,T).
+ruleapp(T,4,m):- on(b,c,T),on(c,t,T).
+ruleapp(T,5,m):- on(c,t,T),clear(b,T),clear(c,T).
+ruleapp(T,6,m):- on(c,t,T),clear(b,T).
+ruleapp(T,7,m):- on(c,t,T).
+ruleapp(T,8,m):- clear(c,T).
+ruleapp(T,9,m):- time(T).
+donothing(T):- ruleapp(T,1,m),not higher_rule_m(T,1).
+move_on(a,b,T):- ruleapp(T,2,m),not higher_rule_m(T,2).
+make_clear(b,T):- ruleapp(T,3,m),not higher_rule_m(T,3).
+make_clear(a,T):- ruleapp(T,4,m),not higher_rule_m(T,4).
+move_on(b,c,T):- ruleapp(T,5,m),not higher_rule_m(T,5).
+make_clear(c,T):- ruleapp(T,6,m),not higher_rule_m(T,6).
+make_clear(b,T):- ruleapp(T,7,m),not higher_rule_m(T,7).
+move_on(c,t,T):- ruleapp(T,8,m),not higher_rule_m(T,8).
+make_clear(c,T):- ruleapp(T,9,m),not higher_rule_m(T,9).
 
 % Actions for sub-task TR procedure 'make_clear/2'
 % I do not know wether it is good to let ruleapp have variable B in it
-ruleapp(T,B,Ps,s):- make_clear_h(B,T),clear(B,T),ps(Ps,sa).
-ruleapp(T,AB,Ps,s):- make_clear_h(B,T),on(AB,B,T),clear(AB,T),ps(Ps,sb).
-ruleapp(T,AB,Ps,s):- make_clear_h(B,T),on(AB,B,T),not clear(AB,T),ps(Ps,sc). 
-already_clear(B,T):- ruleapp(T,B,Ps,s),not higher_rule_s(T,Ps).
-move_on(AB,t,T):- ruleapp(T,AB,Ps,s),not higher_rule_s(T,Ps).
-make_clear_h(AB,T):- ruleapp(T,AB,Ps,s),not higher_rule_s(T,Ps).
+ruleapp(a,T,B,P,s):- make_clear_h(B,T),clear(B,T),p(a,P).
+ruleapp(b,T,AB,P,s):- make_clear_h(B,T),on(AB,B,T),clear(AB,T),p(b,P).
+ruleapp(c,T,AB,P,s):- make_clear_h(B,T),on(AB,B,T),not clear(AB,T),p(c,P). 
+already_clear(B,T):- ruleapp(a,T,B,P,s),not higher_rule_s(T,P).
+move_on(AB,t,T):- ruleapp(b,T,AB,P,s),not higher_rule_s(T,P).
+make_clear_h(AB,T):- ruleapp(c,T,AB,P,s),not higher_rule_s(T,P).
 
-% generate hypotheses.
-
-1{pm(1..5,mb)}1.
-1{pm(1..5,md)}1.
-1{pm(1..5,me)}1.
-1{pm(1..5,mf)}1.
-1{pm(1..5,mg)}1.
-
-1{ps(1..3,sa)}1.
-1{ps(1..3,sb)}1.
-1{ps(1..3,sc)}1.
+1{p(a,1..3)}1.
+1{p(b,1..3)}1.
+1{p(c,1..3)}1.
 
 
-:- pm(P1,ID1),pm(P2,ID2),P1=P2,ID1!=ID2.
-:- ps(P1,ID1),ps(P2,ID2),P1=P2,ID1!=ID2.
+
+:- p(ID1,P),p(ID2,P),ID1!=ID2.
 
 goal:- on(c,t,1),on(b,c,6),on(a,b,9),
        on(d,t,2),on(e,t,3),on(f,t,5),
        on(g,t,7),on(h,t,8),on(i,t,4).
-
 :- not goal.
 
-
-
 #hide.
-#show pm/2.
-#show ps/2.
+#show p/2.
+%#show ruleapp/3.
+%#show move_on/3.
+%#show error/3.
+%#show goal/1.
+%#show donothing/1.
+%#show clear/2.
+%#show on/3.
+%#show ruleapp/2.
+%#show make_clear/2.
+%#show clear(a,T).
+%#show higher_rule_s/2.
+%#show ruleapp/4.
+%#show clear/2.
+%#show make_clear_h(B,T).
+%#show make_clear_h/2.
